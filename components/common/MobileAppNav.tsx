@@ -2,7 +2,7 @@
 import React from "react";
 import Image from "next/image";
 import SettingDropdown from "./SettingDropdown";
-import MobileSideBar from "./MobileSideBar";
+import MobileSideBar from "./MobileSidebar";
 import AddPost from "../post/AddPost";
 import { User } from "@supabase/supabase-js";
 import { Plus } from "lucide-react";
@@ -24,7 +24,7 @@ export default function MobileAppNav({ user }: { user: User }) {
       <AddPost
         user={user}
         children={
-          <button className="absolute bottom-2 right-2 bg-primary h-14 w-14 rounded-full flex justify-center items-center text-white">
+          <button aria-label="Add item" className="absolute bottom-2 right-2 bg-primary h-14 w-14 rounded-full flex justify-center items-center text-white">
             <Plus />
           </button>
         }
