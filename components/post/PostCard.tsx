@@ -3,7 +3,7 @@ import React from "react";
 import UserAvatar from "../common/UserAvatar";
 import { Bookmark, MoreVertical, Send } from "lucide-react";
 import { formatDate, getS3Url } from "@/lib/helper";
-import AddComment from "../comment/AddComment";
+import AddComment from "../comments/AddComment";
 import { User } from "@supabase/supabase-js";
 import PostLike from "./PostLike";
 import ImageViewModal from "../common/ImageViewModal";

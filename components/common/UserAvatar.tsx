@@ -15,7 +15,9 @@ export default function UserAvatar({
   return (
     <Avatar style={{ width: `${width}rem`, height: `${height}rem` }}>
       <AvatarImage src={image} />
-      <AvatarFallback className="text-2xl font-bold">{name[0]}</AvatarFallback>
+      <AvatarFallback className="text-2xl font-bold">
+        {name?.trim()?.charAt(0) || "?"}
+      </AvatarFallback>
     </Avatar>
   );
 }

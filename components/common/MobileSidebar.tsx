@@ -18,7 +18,7 @@ export default function MobileSideBar() {
       <SheetContent side="left" className="w-3/5">
         <div className="flex justify-center ">
           <Image
-            src="/images/logo_512.png"
+            src="/logo_512.png"
             width={50}
             height={50}
             alt="logo"

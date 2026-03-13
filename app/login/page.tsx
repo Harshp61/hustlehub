@@ -7,7 +7,7 @@ import { Suspense } from "react";
 import Loading from "../(front)/loading";
 
 export const metadata: Metadata = {
-  title: "Login|Freelancers",
+  title: "Login|HustleHub",
   description: "Please login to access the Community app for freelancers.",
 };
 
@@ -16,7 +16,7 @@ export default function login() {
     <div className="h-screen w-screen flex justify-center items-center flex-col">
       <div className="flex flex-col justify-center items-center mb-4">
         <Image src="/logo_512.png" width={100} height={100} alt="logo" />
-        <p className="font-bold text-xl">Freelancers</p>
+        <p className="font-bold text-xl">HustleHub</p>
         <p>A community of freelancers</p>
       </div>
 
