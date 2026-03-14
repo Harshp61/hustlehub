@@ -1,9 +1,7 @@
 import SearchInput from "@/components/common/SearchInput";
 import React from "react";
 import { createClient } from "@/lib/supabase/supabaseServer";
-import { cookies } from "next/headers";
 import UserAvatar from "@/components/common/UserAvatar";
-import { getS3Url } from "@/lib/helper";
 import Link from "next/link";
 
 export default async function Search({
@@ -11,12 +9,14 @@ export default async function Search({
 }: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
-  const params = await searchParams; 
+  const params = await searchParams;
+
   const supabase = await createClient();
   const { data: user } = await supabase.auth.getSession();
-  const { data, error } = await supabase
+
+  const { data } = await supabase
     .from("users")
-    .select("id ,username,name,profile_image")
+    .select("id,username,name,profile_image")
     .ilike("username", `%${params?.q ?? ""}%`)
     .neq("id", user.session?.user.id);
 
@@ -26,16 +26,17 @@ export default async function Search({
 
       {data &&
         data.length > 0 &&
-        data.map((item, index) => (
+        data.map((item) => (
           <Link
             className="flex space-x-4 mt-4 p-2"
-            key={index}
+            key={item.id}
             href={`/user/${item.id}`}
           >
             <UserAvatar
               name={item.name}
-              image={item.profile_image ? getS3Url(item.profile_image) : ""}
+              image={item.profile_image ?? ""}
             />
+
             <div className="flex flex-col">
               <p className="font-bold">{item.name}</p>
               <p>{item.username}</p>
