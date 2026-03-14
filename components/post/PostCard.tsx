@@ -53,7 +53,7 @@ export default function PostCard({
       <div className="flex space-x-4 p-2">
         <p>Replies {post.reply_count}</p>
         <p>likes {post.likes_count ?? 0}</p>
-      </div>
+      </div> 
     </div>
   );
 }

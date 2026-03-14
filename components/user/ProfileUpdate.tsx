@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useRef, useState } from "react";
 import {
   Dialog,
@@ -16,14 +17,14 @@ import ImagePreview from "../common/ImagePreview";
 import { createClient } from "@/lib/supabase/supabaseClient";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import Env from "@/env";
 
 export default function ProfileUpdate({ user }: { user?: User | null }) {
-  const [open, setOpen] = useState<boolean>(false);
+  const [open, setOpen] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>();
   const imageRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
+
   const [authState, setAuthState] = useState({
     name: user?.user_metadata?.["name"] ?? "",
     username: user?.user_metadata?.["username"] ?? "",
@@ -36,67 +37,86 @@ export default function ProfileUpdate({ user }: { user?: User | null }) {
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setImage(selectedFile);
-      const imageUrl = URL.createObjectURL(selectedFile);
-      setPreviewUrl(imageUrl);
+    if (!selectedFile) return;
+
+    if (!selectedFile.type.startsWith("image/")) {
+      toast.error("Only image files are allowed");
+      return;
     }
+
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+
+    setImage(selectedFile);
+    setPreviewUrl(URL.createObjectURL(selectedFile));
   };
 
-  const removePriview = () => {
+  const removePreview = () => {
     setImage(null);
-    if (imageRef.current) {
-      imageRef.current.value = "";
-    }
+    if (imageRef.current) imageRef.current.value = "";
     setPreviewUrl(undefined);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
     setLoading(true);
 
     if (!user) {
+      toast.error("User not found. Please login again.");
       setLoading(false);
-      toast.error("User not found. Please log in again.", { theme: "colored" });
       return;
     }
 
-    let payload: ProfilePayloadType = {
+    let payload: any = {
       name: authState.name,
       description: authState.description,
     };
-    if (image) {
-      const path = `/${user.id}/profile.png`;
-      const { data, error } = await supabase.storage
-        .from(Env.S3_BUCKET)
-        .upload(path, image, {
-          upsert: true,
-        });
+
+    try {
+      if (image) {
+        const path = `${user.id}/profile.png`;
+
+        const { error } = await supabase.storage
+          .from("hustle")
+          .upload(path, image, {
+            upsert: true,
+            contentType: image.type,
+          });
+
+        if (error) {
+          console.error(error);
+          toast.error(error.message);
+          setLoading(false);
+          return;
+        }
+
+        const { data } = supabase.storage.from("hustle").getPublicUrl(path);
+
+        payload.profile_image = data.publicUrl;
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        data: payload,
+      });
 
       if (error) {
+        console.error(error);
+        toast.error(error.message);
         setLoading(false);
-        console.log("Image upload error is", error);
-        toast.error("Something went wrong", { theme: "colored" });
         return;
       }
 
-      payload.profile_image = data?.path;
+      toast.success("Profile updated successfully!");
+      router.refresh();
+      setOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
     }
 
-    const { error } = await supabase.auth.updateUser({
-      data: payload,
-    });
-
-    if (error) {
-      setLoading(false);
-      toast.error("Something went wrong.please try again!");
-      return;
-    }
     setLoading(false);
-    toast.success("Profile updated successfully!", { theme: "colored" });
-    router.refresh();
-    setOpen(false);
   };
 
   return (
@@ -106,6 +126,7 @@ export default function ProfileUpdate({ user }: { user?: User | null }) {
           Edit Profile
         </Button>
       </DialogTrigger>
+
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         className="overflow-y-scroll max-h-screen"
@@ -113,9 +134,10 @@ export default function ProfileUpdate({ user }: { user?: User | null }) {
         <DialogHeader>
           <DialogTitle>Update Profile</DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <Label htmlFor="name">Name</Label>
+            <Label>Name</Label>
             <Input
               placeholder="Enter your name"
               value={authState.name}
@@ -124,44 +146,40 @@ export default function ProfileUpdate({ user }: { user?: User | null }) {
               }
             />
           </div>
+
           <div className="mb-4">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              type="email"
-              placeholder="Enter your name"
-              value={authState.email}
-              readOnly
-              id="email"
-            />
+            <Label>Email</Label>
+            <Input type="email" value={authState.email} readOnly />
           </div>
+
           <div className="mb-4">
-            <Label htmlFor="bio">Bio</Label>
+            <Label>Bio</Label>
             <Textarea
-              onChange={(event) =>
-                setAuthState({ ...authState, description: event.target.value })
-              }
               value={authState.description}
-              placeholder="Type you bio"
-              id="bio"
+              placeholder="Type your bio"
+              onChange={(event) =>
+                setAuthState({
+                  ...authState,
+                  description: event.target.value,
+                })
+              }
             />
           </div>
+
           <div className="mb-4">
-            <Label htmlFor="profileImage">Profile Image</Label>
-            <Input
-              type="file"
-              id="profileImage"
-              ref={imageRef}
-              onChange={handleImageChange}
-            />
+            <Label>Profile Image</Label>
+            <Input type="file" ref={imageRef} onChange={handleImageChange} />
+
             {previewUrl && (
               <div className="mt-2">
-                <ImagePreview image={previewUrl} callback={removePriview} />
+                <ImagePreview image={previewUrl} callback={removePreview} />
               </div>
             )}
           </div>
+
           <div className="mb-4">
             <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? "Processing." : "Submit"}
+              {loading ? "Processing..." : "Submit"}
             </Button>
           </div>
         </form>

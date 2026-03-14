@@ -14,7 +14,13 @@ export default function UserAvatar({
 }) {
   return (
     <Avatar style={{ width: `${width}rem`, height: `${height}rem` }}>
-      <AvatarImage src={image} />
+      {image && (
+        <AvatarImage
+          src={image}
+          alt={name}
+          referrerPolicy="no-referrer"
+        />
+      )}
       <AvatarFallback className="text-2xl font-bold">
         {name?.trim()?.charAt(0) || "?"}
       </AvatarFallback>
