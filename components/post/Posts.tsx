@@ -33,7 +33,7 @@ export default function Posts({
   }, [inView]);
 
   useEffect(() => {
-    // * Create chanel
+    // * Create channel
     const postChannel = supabase.channel("postsChannel");
 
     // * delete changes
