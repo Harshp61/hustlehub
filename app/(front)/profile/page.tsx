@@ -33,32 +33,19 @@ export default async function Profile() {
     profile_image?: string;
   };
 
-  // Fetch and transform Posts
+  // Fetch Posts — do NOT pre-transform image; ImageViewModal calls getS3Url itself
   const { data: rawPosts } = await supabase
     .rpc("get_posts_with_likes", { request_user_id: user.id })
     .order("post_id", { ascending: false })
     .eq("user_id", user.id);
 
-  // Type the mapping explicitly to resolve the 'implicit any' error
-  const posts: PostType[] = (rawPosts || []).map((p: PostType) => ({
-    ...p,
-    image: getPublicUrl(p.image),
-  }));
+  const posts: PostType[] = (rawPosts || []) as PostType[];
 
-  // Fetch and transform Comments
-  const { data: rawComments } = await supabase
+  // Fetch Comments
+  const { data: comments } = await supabase
     .from("comments")
     .select("id,image,content,created_at,users(id,name,username,profile_image)")
     .eq("user_id", user.id);
-
-  const comments = (rawComments || []).map((c: any) => ({
-    ...c,
-    image: getPublicUrl(c.image),
-    users: {
-      ...c.users,
-      profile_image: getPublicUrl(c.users?.profile_image),
-    },
-  }));
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -95,7 +82,7 @@ export default async function Profile() {
         </TabsContent>
 
         <TabsContent value="comments">
-          {comments.map((item, index) => (
+          {(comments ?? []).map((item, index) => (
             <CommentCard comment={item} key={item.id ?? index} />
           ))}
         </TabsContent>
