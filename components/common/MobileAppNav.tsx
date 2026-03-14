@@ -13,7 +13,7 @@ export default function MobileAppNav({ user }: { user: User }) {
       <nav className="flex justify-between items-center p-2">
         <MobileSideBar />
         <Image
-          src="/images/logo_512.png"
+          src="/logo_512.png"
           width={40}
           height={40}
           alt="logo"
