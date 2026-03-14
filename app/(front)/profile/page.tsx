@@ -6,72 +6,97 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCard from "@/components/post/PostCard";
 import CommentCard from "@/components/comments/CommentCard";
 
+// Ensure your PostType is imported correctly
+// import { PostType } from "@/types"; 
+
 export default async function Profile() {
   const supabase = await createClient();
 
-  const { data } = await supabase.auth.getSession();
-  const user = data.session?.user;
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
-  const metadata = user?.user_metadata as {
+  if (!user) {
+    return <div>Please login to view your profile.</div>;
+  }
+
+  // Helper to safely generate public URL
+  const getPublicUrl = (path: string | null | undefined): string | undefined => {
+    if (!path) return undefined;
+    const { data } = supabase.storage.from("hustle").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const metadata = user.user_metadata as {
     name?: string;
     username?: string;
     description?: string;
     profile_image?: string;
   };
 
-  const { data: posts } = await supabase
-    .rpc("get_posts_with_likes", {
-      request_user_id: user?.id,
-    })
+  // Fetch and transform Posts
+  const { data: rawPosts } = await supabase
+    .rpc("get_posts_with_likes", { request_user_id: user.id })
     .order("post_id", { ascending: false })
-    .eq("user_id", user?.id);
+    .eq("user_id", user.id);
 
-  const { data: comments } = await supabase
+  // Type the mapping explicitly to resolve the 'implicit any' error
+  const posts: PostType[] = (rawPosts || []).map((p: PostType) => ({
+    ...p,
+    image: getPublicUrl(p.image),
+  }));
+
+  // Fetch and transform Comments
+  const { data: rawComments } = await supabase
     .from("comments")
-    .select(
-      "id,image,content,created_at,users(id,name,username,profile_image)"
-    )
-    .eq("user_id", user?.id);
+    .select("id,image,content,created_at,users(id,name,username,profile_image)")
+    .eq("user_id", user.id);
+
+  const comments = (rawComments || []).map((c: any) => ({
+    ...c,
+    image: getPublicUrl(c.image),
+    users: {
+      ...c.users,
+      profile_image: getPublicUrl(c.users?.profile_image),
+    },
+  }));
 
   return (
-    <div>
+    <div className="max-w-4xl mx-auto p-4">
       <div className="flex justify-between items-center">
         <div>
           <p className="text-2xl font-bold">{metadata?.name}</p>
-          <p className="font-bold">@{metadata?.username}</p>
+          <p className="font-bold text-gray-500">@{metadata?.username}</p>
         </div>
 
         <UserAvatar
           name={metadata?.name ?? "User"}
-          image={metadata?.profile_image ?? ""}
+          image={getPublicUrl(metadata?.profile_image)}
           width={5}
           height={5}
         />
       </div>
 
-      <p className="mt-4">{metadata?.description}</p>
+      <p className="mt-4 text-gray-700">{metadata?.description}</p>
 
-      <ProfileUpdate user={user!} />
+      <div className="mt-4">
+        <ProfileUpdate user={user} />
+      </div>
 
-      <Tabs defaultValue="posts" className="w-full mt-4">
+      <Tabs defaultValue="posts" className="w-full mt-8">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>
         </TabsList>
 
         <TabsContent value="posts">
-          {posts?.map((item: PostType, index: number) => (
-            <PostCard
-              post={item as PostType}
-              key={index}
-              user={data.session?.user!}
-            />
+          {posts.map((item) => (
+            <PostCard post={item} key={item.post_id} user={user} />
           ))}
         </TabsContent>
 
         <TabsContent value="comments">
-          {comments?.map((item, index) => (
-            <CommentCard comment={item} key={index} />
+          {comments.map((item, index) => (
+            <CommentCard comment={item} key={item.id ?? index} />
           ))}
         </TabsContent>
       </Tabs>
