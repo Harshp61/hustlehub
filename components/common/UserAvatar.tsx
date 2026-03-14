@@ -12,15 +12,18 @@ export default function UserAvatar({
   width?: number;
   height?: number;
 }) {
+  const validImage = image && image.startsWith("http");
+
   return (
     <Avatar style={{ width: `${width}rem`, height: `${height}rem` }}>
-      {image && (
+      {validImage && (
         <AvatarImage
           src={image}
           alt={name}
           referrerPolicy="no-referrer"
         />
       )}
+
       <AvatarFallback className="text-2xl font-bold">
         {name?.trim()?.charAt(0) || "?"}
       </AvatarFallback>
