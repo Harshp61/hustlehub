@@ -23,12 +23,16 @@ export async function middleware(request: NextRequest) {
 
   const { data } = await supabase.auth.getUser();
 
+  const { pathname } = request.nextUrl;
+
+  // allow login page
+  if (pathname.startsWith("/login")) {
+    return response;
+  }
+
   if (!data.user) {
     return NextResponse.redirect(
-      new URL(
-        "/login?error=Please login first to access this route.",
-        request.url
-      )
+      new URL("/login?error=Please login first to access this route.", request.url)
     );
   }
 
@@ -36,5 +40,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [],
+  matcher: ["/((?!login|_next|favicon.ico).*)"],
 };
