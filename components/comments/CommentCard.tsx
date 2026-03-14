@@ -11,12 +11,14 @@ export default function CommentCard({ comment }: { comment: CommentType }) {
           name={comment?.users?.name}
           image={
             comment?.users?.profile_image
-              ? getS3Url(comment?.users?.profile_image)
-              : ""
+              ? comment.users.profile_image.startsWith("http")
+                ? comment.users.profile_image
+                : getS3Url(comment.users.profile_image)
+              : undefined
           }
         />
         <div className="flex flex-col">
-          <p className="font-bold">{comment?.users?.name}</p>
+          <p className="font-bold">{comment?.users?.name ?? "Unknown User"}</p>
           <p>{formatDate(comment.created_at)}</p>
         </div>
       </div>
