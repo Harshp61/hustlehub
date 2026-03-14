@@ -11,7 +11,6 @@ import { Image, StickyNote } from "lucide-react";
 import { Button } from "../ui/button";
 import ImagePreview from "../common/ImagePreview";
 import { createClient } from "@/lib/supabase/supabaseClient";
-import Env from "@/env";
 import { v4 as uuidv4 } from "uuid";
 import { User } from "@supabase/supabase-js";
 import { toast } from "react-toastify";
@@ -59,7 +58,7 @@ export default function AddPost({
     }
 
     setLoading(true);
-    const payload: PostPayloadType = {
+    const payload: any = {
       content: content,
       user_id: user.id,
     };
@@ -67,10 +66,11 @@ export default function AddPost({
     if (image) {
       const path = `${user.id}/${uuidv4()}`;
       const { data: imgData, error } = await supabase.storage
-        .from(Env.S3_BUCKET)
+        .from("hustle")
         .upload(path, image);
+
       if (error) {
-        toast.error("Something went wrong.please try again!", {
+        toast.error("Image upload failed. Please try again!", {
           theme: "colored",
         });
         setLoading(false);
@@ -79,16 +79,16 @@ export default function AddPost({
       payload.image = imgData.path;
     }
 
-    // * Add Post here
     const { error: postErr } = await supabase.from("posts").insert(payload);
+    
     if (postErr) {
-      console.log("The post error is", postErr);
-      toast.error("Something went wrong.please try again!", {
+      toast.error("Could not save post. Please try again!", {
         theme: "colored",
       });
       setLoading(false);
       return;
     }
+
     resetState();
     setLoading(false);
     toast.success("Post added successfully!", { theme: "colored" });
@@ -104,7 +104,7 @@ export default function AddPost({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        className="border-none "
+        className="border-none"
         onInteractOutside={(e) => {
           e.preventDefault();
         }}
@@ -135,7 +135,7 @@ export default function AddPost({
               className="h-5 w-5 text-gray-500 mt-2 cursor-pointer"
               onClick={handleIconClick}
             />
-            <Button size="sm" disabled={content.length <= 0} onClick={addPost}>
+            <Button size="sm" disabled={content.length <= 0 || loading} onClick={addPost}>
               {loading ? "Processing.." : "Post"}
             </Button>
           </div>
