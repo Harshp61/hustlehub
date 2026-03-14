@@ -19,12 +19,6 @@ export default async function Profile() {
     return <div>Please login to view your profile.</div>;
   }
 
-  // Helper to safely generate public URL
-  const getPublicUrl = (path: string | null | undefined): string | undefined => {
-    if (!path) return undefined;
-    const { data } = supabase.storage.from("hustle").getPublicUrl(path);
-    return data.publicUrl;
-  };
 
   const metadata = user.user_metadata as {
     name?: string;
@@ -57,7 +51,7 @@ export default async function Profile() {
 
         <UserAvatar
           name={metadata?.name ?? "User"}
-          image={getPublicUrl(metadata?.profile_image)}
+          image={metadata?.profile_image ?? undefined}
           width={5}
           height={5}
         />
