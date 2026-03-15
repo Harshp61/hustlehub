@@ -13,7 +13,7 @@ const fontSans = FontSans({
 
 export const metadata: Metadata = {
   title: "HustleHub",
-  description: "A Community app for freelancers",
+  description: "A Community app for Everyone ",
 };
 
 export default function RootLayout({
